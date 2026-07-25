@@ -1,7 +1,7 @@
 name: Interactive Browser Remote Access
 
 on:
-  workflow_dispatch: # מאפשר הפעלה ידנית מתוך לשונית Actions
+  workflow_dispatch: # הפעלה ידנית בלשונית Actions
 
 jobs:
   interactive-browser:
@@ -28,8 +28,10 @@ jobs:
           # הפעלת שרת VNC
           x11vnc -display :99 -forever -shared -rfbport 5900 -nopw &
           
-          # הפעלת noVNC המתרגם ל-Web בפורט 6080
+          # הפעלת noVNC בפורט 6080
           /usr/share/novnc/utils/novnc_proxy --vnc localhost:5900 --listen 6080 &
 
       - name: Start Interactive SSH Session (tmate)
         uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true # מריץ ברקע כדי למנוע הצפה של הלוג בחיבור
