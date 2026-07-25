@@ -24,10 +24,15 @@ jobs:
           x11vnc -display :99 -forever -shared -rfbport 5900 -nopw &
           /usr/share/novnc/utils/novnc_proxy --vnc localhost:5900 --listen 6080 &
 
-      - name: Start ngrok Tunnel
+      - name: Install and Start ngrok Tunnel
         env:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
         run: |
-          curl -s https://bin.equinox.io/c/b4Pvu3qMjsy/ngrok-v3-stable-linux-amd64.tgz | tar xz
-          ./ngrok config add-authtoken $NGROK_AUTH_TOKEN
-          ./ngrok http 6080 --log=stdout
+          # התקנת ngrok מהמאגר הרשמי
+          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
+          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
+          sudo apt update && sudo apt install ngrok -y
+          
+          # הגדרת ה-Authtoken והרצת המנהרה
+          ngrok config add-authtoken $NGROK_AUTH_TOKEN
+          ngrok http 6080 --log=stdout
