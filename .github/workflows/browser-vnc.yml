@@ -28,11 +28,25 @@ jobs:
         env:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
         run: |
-          # התקנת ngrok מהמאגר הרשמי
+          # התקנת ngrok
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt update && sudo apt install ngrok -y
           
-          # הגדרת ה-Authtoken והרצת המנהרה
+          # הגדרת ה-Authtoken
           ngrok config add-authtoken $NGROK_AUTH_TOKEN
-          ngrok http 6080 --log=stdout
+          
+          # הפעלת ngrok ברקע והפניית הלוגים לקובץ
+          ngrok http 6080 --log=stdout > ngrok.log 2>&1 &
+          
+          # המתנה של 5 שניות ליצירת החיבור
+          sleep 5
+          
+          # חילוץ הקישור והדפסתו פעם אחת בלבד
+          echo "=========================================="
+          echo "Your noVNC URL:"
+          grep -o 'https://[^"]*ngrok-free.app' ngrok.log | head -n 1
+          echo "=========================================="
+          
+          # שמירה על הג'וב פעיל מבלי להדפיס לוגים
+          tail -f /dev/null
