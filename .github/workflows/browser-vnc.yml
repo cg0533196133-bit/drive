@@ -14,7 +14,7 @@ jobs:
       - name: Install Display and Browser Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb x11vnc fluxbox novnc python3-websockify google-chrome-stable
+          sudo apt-get install -y xvfb x11vnc fluxbox novnc python3-websockify google-chrome-stable jq
 
       - name: Start Virtual Display & VNC Server
         run: |
@@ -36,15 +36,15 @@ jobs:
           # הגדרת ה-Authtoken
           ngrok config add-authtoken $NGROK_AUTH_TOKEN
           
-          # הפעלת ngrok ברקע והפניית הלוגים לקובץ
-          nohup ngrok http 6080 --log=stdout > ngrok.log 2>&1 &
+          # הפעלת ngrok ברקע
+          nohup ngrok http 6080 > /dev/null 2>&1 &
           
-          # המתנה בלולאה עד לקבלת הקישור מתוך הלוגים (עד 30 שניות)
+          # המתנה ליצירת החיבור ושליפת ה-URL דרך ה-API המקומי
           echo "Waiting for ngrok URL..."
           URL=""
           for i in {1..30}; do
-            URL=$(grep -o 'https://[^"]*ngrok-free.app' ngrok.log | head -n 1)
-            if [ -n "$URL" ]; then
+            URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url' 2>/dev/null)
+            if [ "$URL" != "null" ] && [ -n "$URL" ]; then
               break
             fi
             sleep 1
