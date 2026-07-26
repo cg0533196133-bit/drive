@@ -39,13 +39,21 @@ jobs:
           # הפעלת ngrok ברקע והפניית הלוגים לקובץ
           nohup ngrok http 6080 --log=stdout > ngrok.log 2>&1 &
           
-          # המתנה ליצירת החיבור
-          sleep 5
+          # המתנה בלולאה עד לקבלת הקישור מתוך הלוגים (עד 30 שניות)
+          echo "Waiting for ngrok URL..."
+          URL=""
+          for i in {1..30}; do
+            URL=$(grep -o 'https://[^"]*ngrok-free.app' ngrok.log | head -n 1)
+            if [ -n "$URL" ]; then
+              break
+            fi
+            sleep 1
+          done
           
           # הדפסת הקישור למסך
           echo "=========================================="
           echo "Your noVNC URL:"
-          grep -o 'https://[^"]*ngrok-free.app' ngrok.log | head -n 1
+          echo "$URL"
           echo "=========================================="
 
       - name: Keep Workflow Alive
