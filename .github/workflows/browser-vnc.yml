@@ -16,30 +16,31 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb x11vnc fluxbox novnc python3-websockify google-chrome-stable jq
 
-      - name: Start Virtual Display & VNC Server
+      - name: Start Virtual Display, VNC Server & Chrome
         run: |
+          # הפעלת תצוגה וירטואלית
           Xvfb :99 -screen 0 1280x1024x24 &
           export DISPLAY=:99
           fluxbox &
+          
+          # הפעלת שרת VNC ו-noVNC
           x11vnc -display :99 -forever -shared -rfbport 5900 -nopw &
           /usr/share/novnc/utils/novnc_proxy --vnc localhost:5900 --listen 6080 &
+          
+          # הפעלת כרום באופן אוטומטי ברקע
+          google-chrome --no-sandbox &
 
       - name: Start ngrok Tunnel in Background
         env:
           NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
         run: |
-          # התקנת ngrok
           curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
           echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
           sudo apt update && sudo apt install ngrok -y
           
-          # הגדרת ה-Authtoken
           ngrok config add-authtoken $NGROK_AUTH_TOKEN
-          
-          # הפעלת ngrok ברקע
           nohup ngrok http 6080 > /dev/null 2>&1 &
           
-          # המתנה ליצירת החיבור ושליפת ה-URL דרך ה-API המקומי
           echo "Waiting for ngrok URL..."
           URL=""
           for i in {1..30}; do
@@ -50,7 +51,6 @@ jobs:
             sleep 1
           done
           
-          # הדפסת הקישור למסך
           echo "=========================================="
           echo "Your noVNC URL:"
           echo "$URL"
